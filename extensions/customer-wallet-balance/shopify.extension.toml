@@ -1,0 +1,15 @@
+api_version = "2026-04"
+
+[[extensions]]
+name = "customer-wallet-balance"
+handle = "customer-wallet-balance"
+type = "ui_extension"
+uid = "2bff2c15-9b1b-903d-1798-be5e42cf089d43cd3423"
+
+[[extensions.targeting]]
+module = "./src/OrderStatusBlock.jsx"
+target = "customer-account.order-status.block.render"
+
+[extensions.capabilities]
+api_access = true
+network_access = true

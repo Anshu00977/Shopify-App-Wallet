@@ -1,0 +1,65 @@
+{% comment %}
+  VaultWallet - Customer Wallet Balance Block
+{% endcomment %}
+<div id="vaultwallet-icon" style="display:none; align-items:center; cursor:pointer; gap:6px;">
+  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 256 256" fill="currentColor">
+    <path d="M216,72H56a8,8,0,0,1,0-16H192a8,8,0,0,1,8,8h16a8,8,0,0,0-8-8H56A24,24,0,0,0,32,80V192a24,24,0,0,0,24,24H216a16,16,0,0,0,16-16V88A16,16,0,0,0,216,72Zm0,128H56a8,8,0,0,1-8-8V88H216ZM172,148a12,12,0,1,1-12-12A12,12,0,0,1,172,148Z"/>
+  </svg>
+  <span id="vaultwallet-balance" style="
+    font-size:12px;
+    font-weight:700;
+    background:#065f46;
+    color:white;
+    padding:2px 8px;
+    border-radius:10px;
+  ">&#8377;0</span>
+</div>
+
+<script>
+(function() {
+  const appUrl = '{{ block.settings.app_url }}';
+
+  async function loadWalletBalance() {
+    const customerId = window.__st?.cid;
+    if (!customerId) return;
+
+    const shop = window.Shopify?.shop || '{{ shop.permanent_domain }}';
+    const gid = 'gid://shopify/Customer/' + customerId;
+
+    try {
+      const res = await fetch(
+        `${appUrl}/api/wallet-balance?customerId=${encodeURIComponent(gid)}&shop=${encodeURIComponent(shop)}`
+      );
+      const data = await res.json();
+      if (data.balance !== undefined) {
+        document.getElementById('vaultwallet-balance').textContent =
+          '\u20B9' + parseFloat(data.balance).toFixed(2);
+        document.getElementById('vaultwallet-icon').style.display = 'flex';
+      }
+    } catch(e) {
+      console.error('VaultWallet error:', e);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadWalletBalance);
+  } else {
+    loadWalletBalance();
+  }
+})();
+</script>
+
+{% schema %}
+{
+  "name": "VaultWallet Icon",
+  "target": "header",
+  "settings": [
+    {
+      "type": "text",
+      "id": "app_url",
+      "label": "App URL",
+      "default": "https://sweet-tenant-association-boxing.trycloudflare.com"
+    }
+  ]
+}
+{% endschema %}

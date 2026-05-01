@@ -1,0 +1,6 @@
+api_version = "2025-01"
+
+[[extensions]]
+name = "wallet-header"
+handle = "wallet-header"
+type = "theme_app_extension"
