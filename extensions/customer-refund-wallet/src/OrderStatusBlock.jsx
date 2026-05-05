@@ -7,7 +7,7 @@ export default async () => {
 }
 
 function Extension() {
-  const base = 'https://triple-nightlife-showcase-societies.trycloudflare.com/refund-request';
+  const base = 'https://scenario-letting-agents-cause.trycloudflare.com/refund-request';
 
   useEffect(() => {
     setTimeout(() => {

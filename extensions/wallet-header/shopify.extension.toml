@@ -3,4 +3,7 @@ api_version = "2025-01"
 [[extensions]]
 name = "wallet-header"
 handle = "wallet-header"
+
+uid = "fa290118-c810-b980-73d7-0ea45f7d159702120180"
+
 type = "theme_app_extension"

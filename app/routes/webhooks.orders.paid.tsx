@@ -8,9 +8,10 @@ export async function action({ request }: ActionFunctionArgs) {
     if (topic === "ORDERS_PAID") {
         const order = payload as any;
         const tags: string[] = order.tags?.split(", ") || [];
+        const customerId = `gid://shopify/Customer/${order.customer?.id}`;
 
+        // --- TOP-UP FLOW ---
         if (tags.includes("vaultwallet-topup")) {
-            const customerId = `gid://shopify/Customer/${order.customer?.id}`;
             const amount = parseFloat(order.total_price);
 
             let wallet = await db.wallet.findUnique({ where: { customerId } });
@@ -21,13 +22,11 @@ export async function action({ request }: ActionFunctionArgs) {
                 });
             }
 
-            // Update wallet balance
             await db.wallet.update({
                 where: { id: wallet.id },
                 data: { balance: { increment: amount } },
             });
 
-            // Find pending transaction and mark completed
             const pendingTx = await db.transaction.findFirst({
                 where: {
                     walletId: wallet.id,
@@ -43,7 +42,6 @@ export async function action({ request }: ActionFunctionArgs) {
                     data: { status: "completed" },
                 });
             } else {
-                // Create new completed transaction if no pending found
                 await db.transaction.create({
                     data: {
                         walletId: wallet.id,
@@ -53,6 +51,53 @@ export async function action({ request }: ActionFunctionArgs) {
                         status: "completed",
                     },
                 });
+            }
+        }
+
+        // --- WALLET COUPON DEDUCTION FLOW ---
+        const discountCodes: any[] = order.discount_codes || [];
+        console.log("ORDER DISCOUNT CODES:", JSON.stringify(discountCodes));
+        console.log("ORDER TAGS:", order.tags);
+        console.log("ORDER ID:", order.id);
+        const walletCoupon = discountCodes.find((d: any) =>
+            d.code?.startsWith("WALLET-")
+        );
+
+        if (walletCoupon) {
+            const couponCode = walletCoupon.code;
+            const discountAmount = parseFloat(walletCoupon.amount);
+
+            const wallet = await db.wallet.findUnique({ where: { customerId } });
+
+            if (wallet) {
+                // Find the pending transaction for this coupon
+                const pendingTx = await db.transaction.findFirst({
+                    where: {
+                        walletId: wallet.id,
+                        status: "PENDING",
+                        type: "DEBIT",
+                        orderId: couponCode,
+                    },
+                });
+
+                console.log("pendingTx found:", JSON.stringify(pendingTx));
+
+                if (pendingTx) {
+                    // Deduct from wallet and mark completed
+                    await db.wallet.update({
+                        where: { id: wallet.id },
+                        data: { balance: { decrement: discountAmount } },
+                    });
+
+                    await db.transaction.update({
+                        where: { id: pendingTx.id },
+                        data: {
+                            status: "COMPLETED",
+                            orderId: order.id?.toString(),
+                            reason: `Wallet coupon redeemed: ${couponCode}`,
+                        },
+                    });
+                }
             }
         }
     }

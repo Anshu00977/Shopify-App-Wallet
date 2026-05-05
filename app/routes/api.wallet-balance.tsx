@@ -4,7 +4,7 @@ import db from "../db.server";
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, ngrok-skip-browser-warning",
 };
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -20,6 +20,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }
 
     const wallet = await db.wallet.findUnique({ where: { customerId } });
-
     return Response.json({ balance: wallet?.balance ?? 0 }, { headers: corsHeaders });
+}
+
+export async function action({ request }: LoaderFunctionArgs) {
+    return new Response(null, { status: 204, headers: corsHeaders });
 }

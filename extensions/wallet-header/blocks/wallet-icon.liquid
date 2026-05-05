@@ -1,50 +1,190 @@
 {% comment %}
   VaultWallet - Customer Wallet Balance Block
 {% endcomment %}
-<div id="vaultwallet-icon" style="display:none; align-items:center; cursor:pointer; gap:6px;">
-  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 256 256" fill="currentColor">
-    <path d="M216,72H56a8,8,0,0,1,0-16H192a8,8,0,0,1,8,8h16a8,8,0,0,0-8-8H56A24,24,0,0,0,32,80V192a24,24,0,0,0,24,24H216a16,16,0,0,0,16-16V88A16,16,0,0,0,216,72Zm0,128H56a8,8,0,0,1-8-8V88H216ZM172,148a12,12,0,1,1-12-12A12,12,0,0,1,172,148Z"/>
-  </svg>
-  <span id="vaultwallet-balance" style="
-    font-size:12px;
-    font-weight:700;
-    background:#065f46;
-    color:white;
-    padding:2px 8px;
-    border-radius:10px;
-  ">&#8377;0</span>
+
+<div id="vaultwallet-wrapper" style="position:relative; display:none; align-items:center;">
+
+  <div id="vaultwallet-trigger" style="cursor:pointer; display:flex; align-items:center; padding:0 8px;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="30" viewBox="0 0 256 256" fill="currentColor">
+      <path d="M216,72H56a8,8,0,0,1,0-16H192a8,8,0,0,1,8,8h16a8,8,0,0,0-8-8H56A24,24,0,0,0,32,80V192a24,24,0,0,0,24,24H216a16,16,0,0,0,16-16V88A16,16,0,0,0,216,72Zm0,128H56a8,8,0,0,1-8-8V88H216ZM172,148a12,12,0,1,1-12-12A12,12,0,0,1,172,148Z"/>
+    </svg>
+  </div>
+
+  <div id="vaultwallet-dropdown" style="
+    display:none;
+    position:fixed;
+    top:60px;
+    background:white;
+    border-radius:12px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.15);
+    padding:20px 24px;
+    min-width:220px;
+    z-index:99999;
+    text-align:center;
+  ">
+    <div style="font-size:11px; color:#6b7280; margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">Wallet Balance</div>
+    <div id="vaultwallet-dropdown-amount" style="font-size:24px; font-weight:700; color:#065f46;">&#8377;0</div>
+
+    <div style="margin-top:12px; border-top:1px solid #e5e7eb; padding-top:12px;">
+      <div style="font-size:11px; color:#6b7280; margin-bottom:8px;">Apply wallet as coupon</div>
+      <input id="vaultwallet-amount-input" type="number" placeholder="Enter amount" style="
+        width:100%;
+        padding:6px 10px;
+        border:1px solid #d1d5db;
+        border-radius:8px;
+        font-size:14px;
+        margin-bottom:8px;
+        box-sizing:border-box;
+      "/>
+      <button id="vaultwallet-apply-btn" style="
+        width:100%;
+        background:#065f46;
+        color:white;
+        border:none;
+        padding:8px;
+        border-radius:8px;
+        font-size:13px;
+        font-weight:600;
+        cursor:pointer;
+      ">Generate Coupon</button>
+      <div id="vaultwallet-coupon-result" style="margin-top:8px; font-size:13px; display:none;">
+        <div style="color:#6b7280; font-size:11px;">Your coupon code:</div>
+        <div id="vaultwallet-coupon-code" style="
+          font-weight:700;
+          font-size:16px;
+          color:#065f46;
+          letter-spacing:1px;
+          cursor:pointer;
+          margin-top:4px;
+        "></div>
+        <div style="font-size:10px; color:#9ca3af; margin-top:2px;">Click to copy</div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
 (function() {
   const appUrl = '{{ block.settings.app_url }}';
+  let walletBalance = 0;
+  let currentCustomerId = null;
 
   async function loadWalletBalance() {
     const customerId = window.__st?.cid;
     if (!customerId) return;
 
+    currentCustomerId = 'gid://shopify/Customer/' + customerId;
     const shop = window.Shopify?.shop || '{{ shop.permanent_domain }}';
-    const gid = 'gid://shopify/Customer/' + customerId;
 
     try {
       const res = await fetch(
-        `${appUrl}/api/wallet-balance?customerId=${encodeURIComponent(gid)}&shop=${encodeURIComponent(shop)}`
-      );
+  `/apps/vaultwallet/api/wallet-balance?customerId=${encodeURIComponent(currentCustomerId)}&shop=${encodeURIComponent(shop)}`
+);
       const data = await res.json();
       if (data.balance !== undefined) {
-        document.getElementById('vaultwallet-balance').textContent =
-          '\u20B9' + parseFloat(data.balance).toFixed(2);
-        document.getElementById('vaultwallet-icon').style.display = 'flex';
+        walletBalance = parseFloat(data.balance);
+        const amount = '\u20B9' + walletBalance.toFixed(2);
+        document.getElementById('vaultwallet-dropdown-amount').textContent = amount;
+        document.getElementById('vaultwallet-amount-input').max = walletBalance;
+        document.getElementById('vaultwallet-amount-input').placeholder = 'Max \u20B9' + walletBalance.toFixed(2);
+        document.getElementById('vaultwallet-wrapper').style.display = 'flex';
       }
     } catch(e) {
       console.error('VaultWallet error:', e);
     }
   }
 
+  function setupToggle() {
+    const trigger = document.getElementById('vaultwallet-trigger');
+    const dropdown = document.getElementById('vaultwallet-dropdown');
+    if (!trigger || !dropdown) return;
+
+    trigger.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const rect = trigger.getBoundingClientRect();
+      dropdown.style.left = (rect.left - 80) + 'px';
+      dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+    });
+
+    document.addEventListener('click', function(e) {
+  if (dropdown && !dropdown.contains(e.target) && !trigger.contains(e.target)) {
+    dropdown.style.display = 'none';
+  }
+});
+  }
+
+  function setupCoupon() {
+    const btn = document.getElementById('vaultwallet-apply-btn');
+    const input = document.getElementById('vaultwallet-amount-input');
+    const result = document.getElementById('vaultwallet-coupon-result');
+    const codeEl = document.getElementById('vaultwallet-coupon-code');
+    const shop = window.Shopify?.shop || '{{ shop.permanent_domain }}';
+
+    btn.addEventListener('click', async function(e) {
+      e.stopPropagation();
+      const amount = parseFloat(input.value);
+
+      if (!amount || amount <= 0) {
+        alert('Please enter a valid amount');
+        return;
+      }
+      if (amount > walletBalance) {
+        alert('Amount exceeds wallet balance of \u20B9' + walletBalance.toFixed(2));
+        return;
+      }
+
+      btn.textContent = 'Generating...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`/apps/vaultwallet/api/apply-wallet`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerId: currentCustomerId,
+            shop: shop,
+            amount: amount
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.code) {
+          codeEl.textContent = data.code;
+          result.style.display = 'block';
+          btn.textContent = 'Generated!';
+
+          codeEl.addEventListener('click', function() {
+            navigator.clipboard.writeText(data.code).then(function() {
+              codeEl.textContent = 'Copied!';
+              setTimeout(function() { codeEl.textContent = data.code; }, 2000);
+            });
+          });
+        } else {
+          alert(data.error || 'Failed to generate coupon');
+          btn.textContent = 'Generate Coupon';
+          btn.disabled = false;
+        }
+      } catch(e) {
+        console.error('Coupon error:', e);
+        alert('Something went wrong');
+        btn.textContent = 'Generate Coupon';
+        btn.disabled = false;
+      }
+    });
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadWalletBalance);
+    document.addEventListener('DOMContentLoaded', function() {
+      loadWalletBalance();
+      setupToggle();
+      setupCoupon();
+    });
   } else {
     loadWalletBalance();
+    setupToggle();
+    setupCoupon();
   }
 })();
 </script>
@@ -52,13 +192,13 @@
 {% schema %}
 {
   "name": "VaultWallet Icon",
-  "target": "header",
+  "target": "section",
   "settings": [
     {
       "type": "text",
       "id": "app_url",
       "label": "App URL",
-      "default": "https://sweet-tenant-association-boxing.trycloudflare.com"
+      "default": "https://unreproducible-chemiluminescent-jacquiline.ngrok-free.dev"
     }
   ]
 }

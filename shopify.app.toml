@@ -1,60 +1,31 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
 client_id = "87149139000876b92a021908be6da1f0"
 name = "Vault wallet"
-application_url = "https://sweet-tenant-association-boxing.trycloudflare.com"
+application_url = "https://unreproducible-chemiluminescent-jacquiline.ngrok-free.dev"
 embedded = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products,read_orders,write_metaobjects,write_metaobject_definitions,write_draft_orders,read_draft_orders,read_customers"
-
-[product.metafields.app.demo_info]
-type = "single_line_text_field"
-name = "Demo Source Info"
-description = "Tracks products created by the Shopify app template for development"
-
-  [product.metafields.app.demo_info.access]
-  admin = "merchant_read_write"
-
-[metaobjects.app.example]
-name = "Example"
-description = "An example metaobject definition created by this template"
-
-  [metaobjects.app.example.access]
-  admin = "merchant_read_write"
-
-[metaobjects.app.example.fields.title]
-name = "Title"
-type = "single_line_text_field"
-required = true
-
-[metaobjects.app.example.fields.description]
-name = "Description"
-type = "multi_line_text_field"
-
-[webhooks]
-api_version = "2026-07"
-
-  [[webhooks.subscriptions]]
-  uri = "/webhooks/app/uninstalled"
-  topics = [ "app/uninstalled" ]
-
-  [[webhooks.subscriptions]]
-  uri = "/webhooks/app/scopes_update"
-  topics = [ "app/scopes_update" ]
-
-[[webhooks.subscriptions]]
-  uri = "/webhooks/orders/paid"
-  topics = [ "orders/paid" ]
-
-[auth]
-redirect_urls = [ "https://sweet-tenant-association-boxing.trycloudflare.com/api/auth" ]
 
 [build]
 automatically_update_urls_on_dev = true
 
+[webhooks]
+api_version = "2026-07"
+  [[webhooks.subscriptions]]
+  topics = [ "orders/paid" ]
+  uri = "/webhooks/orders/paid"
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/webhooks/app/uninstalled"
+  [[webhooks.subscriptions]]
+  topics = [ "app/scopes_update" ]
+  uri = "/webhooks/app/scopes_update"
+
+[access_scopes]
+scopes = "read_customers,read_draft_orders,read_orders,write_draft_orders,write_metaobject_definitions,write_metaobjects,write_products,write_discounts,read_discounts"
+
+[auth]
+redirect_urls = [ "https://unreproducible-chemiluminescent-jacquiline.ngrok-free.dev/api/auth" ]
+
 [app_proxy]
-url = "https://sweet-tenant-association-boxing.trycloudflare.com"
+url = "https://unreproducible-chemiluminescent-jacquiline.ngrok-free.dev"
 subpath = "vaultwallet"
 prefix = "apps"

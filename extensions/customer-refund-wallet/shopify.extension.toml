@@ -6,10 +6,10 @@ handle = "customer-refund-wallet"
 type = "ui_extension"
 uid = "385eb54a-b26a-2f11-c286-3ef7f241057b8e6c41b7"
 
+
 [[extensions.targeting]]
 module = "./src/OrderStatusBlock.jsx"
 target = "customer-account.order-status.block.render"
-
 [extensions.capabilities]
 api_access = true
 network_access = true
